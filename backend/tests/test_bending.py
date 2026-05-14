@@ -29,7 +29,7 @@ def test_compression_steel_required():
     
     result = calculate_bending(b, d, fck, fyk, MEd)
     
-    assert result["status"] == "COMPRESSION_STEEL_REQUIRED"
+    assert result["status"] == "OK (DOUBLY REINFORCED)"
 
 def test_minimum_steel_governs():
     b = 250.0

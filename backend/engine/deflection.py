@@ -42,9 +42,13 @@ def calculate_deflection(span: float, d: float, b: float, fck: float, fyk: float
     status = "OK" if actual_l_d <= allowable_l_d else "FAIL"
     
     return {
+        "clause": "EN 1992-1-1 §7.4.2",
         "actual_l_d": round(actual_l_d, 2),
         "allowable_l_d": round(allowable_l_d, 2),
         "basic_l_d": round(basic_l_d, 2),
+        "rho": round(rho, 5),
+        "rho_0": round(rho_0, 5),
+        "modification_factor": round(factor, 3),
         "status": status,
         "message": f"Deflection is {'acceptable' if status == 'OK' else 'unacceptable'}. L/d ratio {actual_l_d:.2f} vs allowable {allowable_l_d:.2f}."
     }

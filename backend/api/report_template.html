@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Structural Calculation Report — RC Beam Design</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 18mm 20mm 18mm;
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 18mm; width: 174mm; top: 275mm; height: 10mm;
+            }
+        }
+        body {
+            font-family: "Times New Roman", Georgia, serif;
+            color: #1a1a1a;
+            line-height: 1.55;
+            font-size: 10pt;
+        }
+
+        /* ── Header ── */
+        .report-header {
+            border-bottom: 3px solid #1a365d;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+        .report-header h1 {
+            color: #1a365d;
+            margin: 0 0 4px 0;
+            font-size: 20pt;
+            letter-spacing: 0.5px;
+        }
+        .report-header .subtitle {
+            font-size: 10pt;
+            color: #555;
+            margin: 0;
+        }
+        .report-meta {
+            font-size: 8pt;
+            color: #777;
+            margin-top: 6px;
+        }
+
+        /* ── Executive Summary Box ── */
+        .exec-summary {
+            border: 2px solid #1a365d;
+            border-radius: 4px;
+            padding: 14px 18px;
+            margin: 16px 0 20px 0;
+            background-color: #f0f4fa;
+        }
+        .exec-summary-title {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #1a365d;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .exec-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .exec-grid td {
+            padding: 4px 10px;
+            font-size: 9pt;
+            border: none;
+        }
+        .exec-label {
+            color: #555;
+            font-weight: bold;
+            width: 35%;
+        }
+        .exec-val {
+            font-weight: bold;
+        }
+        .status-pass {
+            color: #166534;
+            font-weight: bold;
+            font-size: 14pt;
+        }
+        .status-fail {
+            color: #991b1b;
+            font-weight: bold;
+            font-size: 14pt;
+        }
+        .util-val {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1a365d;
+        }
+
+        /* ── Section Headers ── */
+        h2 {
+            color: #1a365d;
+            font-size: 12pt;
+            margin: 24px 0 8px 0;
+            padding: 5px 8px;
+            background-color: #e8edf5;
+            border-left: 4px solid #1a365d;
+            page-break-after: avoid;
+        }
+        h2 .clause {
+            float: right;
+            font-size: 8pt;
+            color: #777;
+            font-weight: normal;
+            font-style: italic;
+            padding-top: 3px;
+        }
+        h3 {
+            font-size: 10pt;
+            color: #333;
+            margin: 14px 0 6px 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 3px;
+        }
+
+        /* ── Tables ── */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0 14px 0;
+            font-size: 9pt;
+        }
+        table.data-table th, table.data-table td {
+            border: 1px solid #ccc;
+            padding: 5px 8px;
+            text-align: left;
+        }
+        table.data-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            color: #333;
+            width: 42%;
+        }
+        table.data-table td.val {
+            font-weight: bold;
+            text-align: right;
+        }
+        table.data-table td.unit {
+            font-size: 8pt;
+            color: #777;
+            width: 12%;
+            text-align: center;
+        }
+        table.data-table tr.highlight {
+            background-color: #f0f9f0;
+        }
+        table.data-table tr.fail-row {
+            background-color: #fef2f2;
+        }
+
+        /* ── Formula Blocks ── */
+        .formula-block {
+            background-color: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            padding: 10px 14px;
+            margin: 8px 0 12px 0;
+            font-family: "Courier New", monospace;
+            font-size: 9pt;
+            line-height: 1.8;
+        }
+        .formula-block .step {
+            margin-bottom: 4px;
+        }
+        .formula-block .step-label {
+            font-family: "Times New Roman", serif;
+            font-weight: bold;
+            color: #555;
+            font-size: 8pt;
+        }
+        .formula-block .formula {
+            color: #1a365d;
+        }
+        .formula-block .substitution {
+            color: #333;
+        }
+        .formula-block .result {
+            color: #166534;
+            font-weight: bold;
+        }
+
+        /* ── Recommendation ── */
+        .recommendation {
+            border: 1px solid #1a365d;
+            border-radius: 4px;
+            background-color: #f7f9fc;
+            padding: 10px 14px;
+            margin: 12px 0;
+        }
+        .recommendation strong {
+            color: #1a365d;
+        }
+
+        /* ── Utilization Bars ── */
+        .util-row {
+            margin: 4px 0;
+        }
+        .util-bar-bg {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .util-bar-fill {
+            height: 10px;
+            border-radius: 5px;
+        }
+
+        /* ── Assumptions ── */
+        .assumptions {
+            margin-top: 24px;
+            padding: 12px 16px;
+            background-color: #fefefe;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 8pt;
+            color: #666;
+        }
+        .assumptions h3 {
+            font-size: 9pt;
+            color: #555;
+            margin-top: 0;
+        }
+        .assumptions ul {
+            margin: 4px 0;
+            padding-left: 16px;
+        }
+        .assumptions li {
+            margin-bottom: 3px;
+        }
+
+        /* ── Footer ── */
+        .report-footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            font-size: 7pt;
+            color: #999;
+            text-align: center;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div id="footer_content" style="text-align: center; font-size: 7pt; color: #888;">
+        Page <pdf:pagenumber> of <pdf:pagecount>
+    </div>
+
+    <!-- HEADER -->
+    <div class="report-header">
+        <div style="float: right;">
+            <img src="{{ base_dir }}/logo.png" style="height: 60px;">
+        </div>
+        <h1>Structural Calculation Report</h1>
+        <p class="subtitle">Reinforced Concrete Beam Design to BS EN 1992-1-1:2004+A1:2014 (Eurocode 2)</p>
+        <p class="report-meta">Date: {{ date }} &nbsp;|&nbsp; Software: RC Beam Designer v2.0 &nbsp;|&nbsp; Ref: AUTO-{{ date[:10].replace('-','') }}</p>
+    </div>
+
+    <!-- EXECUTIVE SUMMARY -->
+    <div class="exec-summary">
+        <p class="exec-summary-title">Executive Summary</p>
+        <table class="exec-grid">
+            <tr>
+                <td class="exec-label">Overall Status:</td>
+                <td><span class="{% if res_data.status == 'PASS' %}status-pass{% else %}status-fail{% endif %}">
+                    {{ res_data.status }}
+                </span></td>
+                <td class="exec-label">Max Utilisation:</td>
+                <td><span class="util-val">η = {{ '%.1f' % (res_data.utilization_max * 100) }}%</span></td>
+            </tr>
+            <tr>
+                <td class="exec-label">Section:</td>
+                <td class="exec-val">{{ req_data.b }}×{{ req_data.h }} mm {% if req_data.hf %}(T-beam, bf={{ req_data.bf }}){% endif %}</td>
+                <td class="exec-label">Span:</td>
+                <td class="exec-val">{{ req_data.span }} mm</td>
+            </tr>
+            <tr>
+                <td class="exec-label">Main Steel:</td>
+                <td class="exec-val">{{ req_data.n_bars }}-Ø{{ req_data.bar_diameter|int }} (As={{ res_data.bending_results.As_provided }} mm²)</td>
+                <td class="exec-label">Links:</td>
+                <td class="exec-val">Ø{{ req_data.link_diameter|int }} @ {{ res_data.shear_results.get('max_spacing_required', res_data.shear_results.s_max) }} mm c/c ({{ req_data.n_legs }} legs)</td>
+            </tr>
+        </table>
+    </div>
+
+    {% if res_data.recommendation %}
+    <div class="recommendation">
+        <strong>Recommendation:</strong> {{ res_data.recommendation.text }}
+    </div>
+    {% endif %}
+
+    <!-- 1. DESIGN PARAMETERS -->
+    <h2>1. Design Parameters</h2>
+    <table class="data-table">
+        <tr><th>Section Type</th><td class="val">{% if req_data.hf %}T-Beam{% else %}Rectangular{% endif %}</td><td class="unit"></td></tr>
+        <tr><th>Web width (b<sub>w</sub>)</th><td class="val">{{ req_data.b }}</td><td class="unit">mm</td></tr>
+        <tr><th>Overall depth (h)</th><td class="val">{{ req_data.h }}</td><td class="unit">mm</td></tr>
+        {% if req_data.hf %}
+        <tr><th>Flange width (b<sub>f</sub>)</th><td class="val">{{ req_data.bf }}</td><td class="unit">mm</td></tr>
+        <tr><th>Flange depth (h<sub>f</sub>)</th><td class="val">{{ req_data.hf }}</td><td class="unit">mm</td></tr>
+        {% endif %}
+        <tr><th>Nominal cover (c<sub>nom</sub>)</th><td class="val">{{ req_data.cover }}</td><td class="unit">mm</td></tr>
+        <tr><th>Span (L)</th><td class="val">{{ req_data.span }}</td><td class="unit">mm</td></tr>
+        <tr><th>Concrete grade</th><td class="val">C{{ req_data.fck }}/{{ (req_data.fck*1.25)|int }} (f<sub>ck</sub> = {{ req_data.fck }} MPa)</td><td class="unit"></td></tr>
+        <tr><th>Steel yield strength (f<sub>yk</sub>)</th><td class="val">{{ req_data.fyk }}</td><td class="unit">MPa</td></tr>
+        <tr><th>Partial factor — concrete (γ<sub>c</sub>)</th><td class="val">{{ req_data.gamma_c }}</td><td class="unit"></td></tr>
+        <tr><th>Partial factor — steel (γ<sub>s</sub>)</th><td class="val">{{ req_data.gamma_s }}</td><td class="unit"></td></tr>
+        <tr><th>α<sub>cc</sub></th><td class="val">{{ req_data.alpha_cc }}</td><td class="unit"></td></tr>
+    </table>
+
+    <h3>Applied Actions</h3>
+    <table class="data-table">
+        <tr><th>Design bending moment (M<sub>Ed</sub>)</th><td class="val">{{ req_data.MEd }}</td><td class="unit">kNm</td></tr>
+        <tr><th>Design shear force (V<sub>Ed</sub>)</th><td class="val">{{ req_data.VEd }}</td><td class="unit">kN</td></tr>
+    </table>
+
+    <!-- 2. BENDING DESIGN -->
+    <h2>2. Bending Design <span class="clause">{{ res_data.bending_results.clause }}</span></h2>
+
+    <div class="formula-block">
+        {% for step in res_data.formula_steps.bending %}
+        <div class="step">
+            <span class="step-label">{{ step.description }}:</span><br>
+            <span class="formula">{{ step.formula }}</span><br>
+            <span class="substitution">{{ step.substitution }}</span><br>
+            <span class="result">→ {{ step.result }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <table class="data-table">
+        <tr><th>Effective depth (d)</th><td class="val">{{ res_data.effective_depth }}</td><td class="unit">mm</td></tr>
+        <tr><th>K-factor</th><td class="val">{{ res_data.bending_results.K }}</td><td class="unit">(K' = {{ res_data.bending_results.K_limit }})</td></tr>
+        <tr><th>Neutral axis ratio (x/d)</th><td class="val">{{ res_data.bending_results.x_d }}</td><td class="unit"></td></tr>
+        <tr><th>Lever arm (z)</th><td class="val">{{ res_data.bending_results.z }}</td><td class="unit">mm</td></tr>
+        <tr><th>Required A<sub>s</sub></th><td class="val">{{ res_data.bending_results.As_req }}</td><td class="unit">mm²</td></tr>
+        <tr><th>Minimum A<sub>s,min</sub></th><td class="val">{{ res_data.bending_results.As_min }}</td><td class="unit">mm²</td></tr>
+        <tr class="highlight"><th>Provided A<sub>s,prov</sub> ({{ req_data.n_bars }}-Ø{{ req_data.bar_diameter|int }})</th><td class="val">{{ res_data.bending_results.As_provided }}</td><td class="unit">mm²</td></tr>
+        <tr><th>Moment capacity (M<sub>Rd</sub>)</th><td class="val">{{ res_data.bending_results.MRd }}</td><td class="unit">kNm</td></tr>
+        <tr><th>Utilisation (η = M<sub>Ed</sub>/M<sub>Rd</sub>)</th><td class="val">{{ '%.1f' % (res_data.bending_results.utilization * 100) }}%</td><td class="unit"></td></tr>
+        <tr class="{% if 'OK' in res_data.bending_results.status %}highlight{% else %}fail-row{% endif %}">
+            <th>Status</th><td class="val">{{ res_data.bending_results.status }}</td><td class="unit"></td>
+        </tr>
+    </table>
+
+    <!-- 3. SHEAR DESIGN -->
+    <h2>3. Shear Design <span class="clause">{{ res_data.shear_results.clause }}</span></h2>
+
+    <div class="formula-block">
+        {% for step in res_data.formula_steps.shear %}
+        <div class="step">
+            <span class="step-label">{{ step.description }}:</span><br>
+            <span class="formula">{{ step.formula }}</span><br>
+            <span class="substitution">{{ step.substitution }}</span><br>
+            <span class="result">→ {{ step.result }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <table class="data-table">
+        <tr><th>V<sub>Ed</sub></th><td class="val">{{ req_data.VEd }}</td><td class="unit">kN</td></tr>
+        <tr><th>V<sub>Rd,c</sub> (concrete resistance)</th><td class="val">{{ res_data.shear_results.VRd_c }}</td><td class="unit">kN</td></tr>
+        <tr><th>V<sub>Rd,max</sub> (strut capacity)</th><td class="val">{{ res_data.shear_results.VRd_max }}</td><td class="unit">kN</td></tr>
+        <tr><th>Strut angle (θ)</th><td class="val">{{ res_data.shear_results.theta }}°</td><td class="unit">(cotθ = {{ res_data.shear_results.cot_theta }})</td></tr>
+        <tr><th>Required A<sub>sw</sub>/s</th><td class="val">{{ res_data.shear_results.Asw_s_final }}</td><td class="unit">mm²/mm</td></tr>
+        <tr><th>Max link spacing (s<sub>max</sub>)</th><td class="val">{{ res_data.shear_results.s_max }}</td><td class="unit">mm</td></tr>
+        <tr class="highlight"><th>Provided: Ø{{ req_data.link_diameter|int }} @ {{ res_data.shear_results.get('max_spacing_required', res_data.shear_results.s_max) }} mm</th><td class="val">{{ req_data.n_legs }} legs</td><td class="unit"></td></tr>
+        <tr><th>Utilisation (η)</th><td class="val">{{ '%.1f' % (res_data.shear_results.utilization * 100) }}%</td><td class="unit"></td></tr>
+        <tr class="{% if 'OK' in res_data.shear_results.status %}highlight{% else %}fail-row{% endif %}">
+            <th>Status</th><td class="val">{{ res_data.shear_results.status }}</td><td class="unit"></td>
+        </tr>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- 4. DEFLECTION CHECK -->
+    <h2>4. Deflection Check <span class="clause">{{ res_data.deflection_results.clause }}</span></h2>
+
+    <div class="formula-block">
+        {% for step in res_data.formula_steps.deflection %}
+        <div class="step">
+            <span class="step-label">{{ step.description }}:</span><br>
+            <span class="formula">{{ step.formula }}</span><br>
+            <span class="substitution">{{ step.substitution }}</span><br>
+            <span class="result">→ {{ step.result }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <table class="data-table">
+        <tr><th>Actual L/d</th><td class="val">{{ res_data.deflection_results.actual_l_d }}</td><td class="unit"></td></tr>
+        <tr><th>Allowable L/d</th><td class="val">{{ res_data.deflection_results.allowable_l_d }}</td><td class="unit"></td></tr>
+        <tr><th>Utilisation (η)</th><td class="val">{{ '%.1f' % (res_data.deflection_results.utilization * 100) }}%</td><td class="unit"></td></tr>
+        <tr class="{% if res_data.deflection_results.status == 'OK' %}highlight{% else %}fail-row{% endif %}">
+            <th>Status</th><td class="val">{{ res_data.deflection_results.status }}</td><td class="unit"></td>
+        </tr>
+    </table>
+
+    <!-- 5. CRACKING CONTROL -->
+    <h2>5. Cracking Control <span class="clause">{{ res_data.cracking_results.clause }}</span></h2>
+
+    <div class="formula-block">
+        {% for step in res_data.formula_steps.cracking %}
+        <div class="step">
+            <span class="step-label">{{ step.description }}:</span><br>
+            <span class="formula">{{ step.formula }}</span><br>
+            <span class="substitution">{{ step.substitution }}</span><br>
+            <span class="result">→ {{ step.result }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <table class="data-table">
+        <tr><th>Estimated steel stress (σ<sub>s</sub>)</th><td class="val">{{ res_data.cracking_results.sigma_s }}</td><td class="unit">MPa</td></tr>
+        <tr><th>Actual bar spacing</th><td class="val">{{ res_data.cracking_results.actual_spacing }}</td><td class="unit">mm</td></tr>
+        <tr><th>Max allowable spacing (Table 7.3N)</th><td class="val">{{ res_data.cracking_results.max_allowable_spacing }}</td><td class="unit">mm</td></tr>
+        <tr><th>Crack width limit (w<sub>k</sub>)</th><td class="val">{{ res_data.cracking_results.wk_limit }}</td><td class="unit">mm</td></tr>
+        <tr><th>Utilisation (η)</th><td class="val">{{ '%.1f' % (res_data.cracking_results.utilization * 100) }}%</td><td class="unit"></td></tr>
+        <tr class="{% if res_data.cracking_results.status == 'OK' %}highlight{% else %}fail-row{% endif %}">
+            <th>Status</th><td class="val">{{ res_data.cracking_results.status }}</td><td class="unit"></td>
+        </tr>
+    </table>
+
+    <!-- 6. UTILISATION SUMMARY -->
+    <h2>6. Utilisation Summary</h2>
+    <table class="data-table">
+        <tr>
+            <th>Check</th>
+            <th style="text-align:center">Utilisation (η)</th>
+            <th style="text-align:center">Status</th>
+        </tr>
+        <tr class="{% if 'OK' in res_data.bending_results.status %}highlight{% else %}fail-row{% endif %}">
+            <td>Bending (§6.1)</td>
+            <td class="val">{{ '%.1f' % (res_data.bending_results.utilization * 100) }}%</td>
+            <td style="text-align:center; font-weight:bold">{% if 'OK' in res_data.bending_results.status %}✓{% else %}✗{% endif %}</td>
+        </tr>
+        <tr class="{% if 'OK' in res_data.shear_results.status %}highlight{% else %}fail-row{% endif %}">
+            <td>Shear (§6.2)</td>
+            <td class="val">{{ '%.1f' % (res_data.shear_results.utilization * 100) }}%</td>
+            <td style="text-align:center; font-weight:bold">{% if 'OK' in res_data.shear_results.status %}✓{% else %}✗{% endif %}</td>
+        </tr>
+        <tr class="{% if res_data.deflection_results.status == 'OK' %}highlight{% else %}fail-row{% endif %}">
+            <td>Deflection (§7.4)</td>
+            <td class="val">{{ '%.1f' % (res_data.deflection_results.utilization * 100) }}%</td>
+            <td style="text-align:center; font-weight:bold">{% if res_data.deflection_results.status == 'OK' %}✓{% else %}✗{% endif %}</td>
+        </tr>
+        <tr class="{% if res_data.cracking_results.status == 'OK' %}highlight{% else %}fail-row{% endif %}">
+            <td>Cracking (§7.3)</td>
+            <td class="val">{{ '%.1f' % (res_data.cracking_results.utilization * 100) }}%</td>
+            <td style="text-align:center; font-weight:bold">{% if res_data.cracking_results.status == 'OK' %}✓{% else %}✗{% endif %}</td>
+        </tr>
+        <tr style="border-top: 2px solid #1a365d;">
+            <td style="font-weight:bold">Maximum Utilisation</td>
+            <td class="val" style="font-size: 12pt; color: #1a365d;">{{ '%.1f' % (res_data.utilization_max * 100) }}%</td>
+            <td style="text-align:center; font-weight:bold; font-size: 12pt;">
+                <span class="{% if res_data.status == 'PASS' %}status-pass{% else %}status-fail{% endif %}">{{ res_data.status }}</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ASSUMPTIONS -->
+    <div class="assumptions">
+        <h3>Assumptions &amp; Limitations</h3>
+        <ul>
+            <li>Simply supported beam with uniform loading assumed for deflection check.</li>
+            <li>Concrete properties derived from Table 3.1 of EN 1992-1-1.</li>
+            <li>Exposure class: XC1 (unless otherwise specified). Minimum cover per Table 4.4N.</li>
+            <li>Shear design uses Variable Strut Inclination Method per §6.2.3.</li>
+            <li>Deflection checked using simplified span/effective depth method per §7.4.2 (Table 7.4N).</li>
+            <li>Cracking control via bar spacing rules per §7.3.3 (Table 7.3N). Direct crack width calculation not performed.</li>
+            <li>Quasi-permanent load ratio assumed as 0.6 for steel stress estimation in cracking check.</li>
+            <li>Fire resistance, durability detailing, and anchorage/lap lengths are outside the scope of this calculation.</li>
+            <li>This report is for preliminary design purposes. Independent checking is recommended for final design.</li>
+        </ul>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="report-footer">
+        Generated by RC Beam Designer &mdash; Eurocode 2 Compliant Structural Analysis Tool &mdash; {{ date }}
+    </div>
+
+</body>
+</html>

@@ -49,9 +49,11 @@ def calculate_cracking(fyk: float, As_req: float, As_prov: float, bar_spacing: f
     status = "OK" if bar_spacing <= max_spacing else "FAIL"
     
     return {
+        "clause": "EN 1992-1-1 §7.3.3",
         "sigma_s": round(sigma_s, 1),
         "max_allowable_spacing": round(max_spacing, 1),
         "actual_spacing": round(bar_spacing, 1),
+        "wk_limit": wk_limit,
         "status": status,
         "message": f"Bar spacing check: {'OK' if status == 'OK' else 'FAIL'}. {bar_spacing}mm vs {max_spacing:.1f}mm limit."
     }

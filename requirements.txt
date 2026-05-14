@@ -4,5 +4,4 @@ pydantic
 sqlalchemy
 xhtml2pdf
 jinja2
-pytest
-watchfiles
+python-multipart
