@@ -214,7 +214,7 @@ function App() {
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch('/api/projects');
+      const res = await fetch('/_/backend/projects');
       if (res.ok) {
         const data = await res.json();
         setProjects(data);
@@ -227,7 +227,7 @@ function App() {
   const createProject = async () => {
     if (!newProjectName.trim()) return;
     try {
-      const res = await fetch('/api/projects', {
+      const res = await fetch('/_/backend/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newProjectName, description: '' })
@@ -246,7 +246,7 @@ function App() {
   const selectProject = async (proj) => {
     setSelectedProject(proj);
     try {
-      const res = await fetch(`/api/projects/${proj.id}/beams`);
+      const res = await fetch(`/_/backend/projects/${proj.id}/beams`);
       if (res.ok) {
         const data = await res.json();
         setBeams(data);
@@ -259,7 +259,7 @@ function App() {
   const saveBeam = async () => {
     if (!selectedProject || !newBeamName.trim()) return;
     try {
-      const res = await fetch(`/api/projects/${selectedProject.id}/beams`, {
+      const res = await fetch(`/_/backend/projects/${selectedProject.id}/beams`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newBeamName, parameters: formData })
@@ -336,7 +336,7 @@ function App() {
         hf: formData.isTBeam ? formData.hf : null
       };
 
-      const response = await fetch('/api/design', {
+      const response = await fetch('/_/backend/design', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -370,7 +370,7 @@ function App() {
         bf: formData.isTBeam ? formData.bf : null,
         hf: formData.isTBeam ? formData.hf : null
       };
-      const response = await fetch('/api/report', {
+      const response = await fetch('/_/backend/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
