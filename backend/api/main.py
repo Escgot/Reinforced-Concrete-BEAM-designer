@@ -41,12 +41,12 @@ def _build_recommendation(req, bending, shear, As_prov, u_bend, u_shear):
         if efficiency < 50:
             return {
                 "action": "OPTIMIZE",
-                "text": f"Design is conservative (η={efficiency:.0f}%). Consider reducing reinforcement for economy.",
+                "text": f"Design is conservative (util.={efficiency:.0f}%). Consider reducing reinforcement for economy.",
                 "suggestion": None
             }
         return {
             "action": "MAINTAIN",
-            "text": f"Maintain current {req.n_bars}-Ø{int(req.bar_diameter)} configuration for optimal efficiency (η={efficiency:.0f}%).",
+            "text": f"Maintain current {req.n_bars}-D{int(req.bar_diameter)} configuration for optimal efficiency (util.={efficiency:.0f}%).",
             "suggestion": None
         }
 
@@ -74,7 +74,7 @@ def _build_recommendation(req, bending, shear, As_prov, u_bend, u_shear):
         if best:
             return {
                 "action": "INCREASE_STEEL",
-                "text": f"Provided steel insufficient. Use {best['n_bars']}-Ø{best['diameter']} (As={best['As_prov']} mm², η={best['utilization']:.0%}).",
+                "text": f"Provided steel insufficient. Use {best['n_bars']}-D{best['diameter']} (As={best['As_prov']} mm2, util.={best['utilization']:.0%}).",
                 "suggestion": best
             }
         return {
@@ -99,104 +99,104 @@ def _build_formula_steps(req, d, bending, shear, deflection, cracking, As_prov):
     bending_steps = [
         {
             "description": "Effective depth",
-            "formula": "d = h − c_nom − φ_link − φ_bar/2",
-            "substitution": f"d = {req.h} − {req.cover} − {req.link_diameter} − {req.bar_diameter}/2",
+            "formula": "d = h - c_nom - d_link - d_bar/2",
+            "substitution": f"d = {req.h} - {req.cover} - {req.link_diameter} - {req.bar_diameter}/2",
             "result": f"{d:.1f} mm"
         },
         {
             "description": "Design concrete strength",
-            "formula": "f_cd = α_cc · f_ck / γ_c",
-            "substitution": f"f_cd = {req.alpha_cc} × {req.fck} / {req.gamma_c}",
+            "formula": "f_cd = alpha_cc * f_ck / gamma_c",
+            "substitution": f"f_cd = {req.alpha_cc} * {req.fck} / {req.gamma_c}",
             "result": f"{bending.get('fcd', 0):.2f} MPa"
         },
         {
             "description": "Design steel strength",
-            "formula": "f_yd = f_yk / γ_s",
+            "formula": "f_yd = f_yk / gamma_s",
             "substitution": f"f_yd = {req.fyk} / {req.gamma_s}",
             "result": f"{bending.get('fyd', 0):.2f} MPa"
         },
         {
             "description": "K-factor",
-            "formula": "K = M_Ed / (b_eff · d² · f_ck)",
-            "substitution": f"K = {req.MEd}×10⁶ / ({bending.get('b_eff', req.b)} × {d:.1f}² × {req.fck})",
+            "formula": "K = M_Ed / (b_eff * d^2 * f_ck)",
+            "substitution": f"K = {req.MEd}*10^6 / ({bending.get('b_eff', req.b)} * {d:.1f}^2 * {req.fck})",
             "result": f"{bending.get('K', 0):.4f}  (K' = {bending.get('K_limit', 0.167):.3f})"
         },
         {
             "description": "Lever arm",
-            "formula": "z = d · (0.5 + √(0.25 − K/1.134))",
-            "substitution": f"z = {d:.1f} × (0.5 + √(0.25 − {bending.get('K', 0):.4f}/1.134))",
+            "formula": "z = d * (0.5 + sqrt(0.25 - K/1.134))",
+            "substitution": f"z = {d:.1f} * (0.5 + sqrt(0.25 - {bending.get('K', 0):.4f}/1.134))",
             "result": f"{bending.get('z', 0):.2f} mm"
         },
         {
             "description": "Required tension steel",
-            "formula": "A_s,req = M_Ed / (f_yd · z)",
-            "substitution": f"A_s,req = {req.MEd}×10⁶ / ({bending.get('fyd', 0):.2f} × {bending.get('z', 0):.2f})",
-            "result": f"{bending.get('As_req', 0):.2f} mm²"
+            "formula": "A_s,req = M_Ed / (f_yd * z)",
+            "substitution": f"A_s,req = {req.MEd}*10^6 / ({bending.get('fyd', 0):.2f} * {bending.get('z', 0):.2f})",
+            "result": f"{bending.get('As_req', 0):.2f} mm2"
         },
         {
             "description": "Provided tension steel",
-            "formula": "A_s,prov = n · π·φ²/4",
-            "substitution": f"A_s,prov = {req.n_bars} × π×{req.bar_diameter}²/4",
-            "result": f"{As_prov:.2f} mm²"
+            "formula": "A_s,prov = n * pi*d^2/4",
+            "substitution": f"A_s,prov = {req.n_bars} * pi*{req.bar_diameter}^2/4",
+            "result": f"{As_prov:.2f} mm2"
         },
     ]
 
     shear_steps = [
         {
             "description": "Size factor",
-            "formula": "k = min(2.0, 1 + √(200/d))",
-            "substitution": f"k = 1 + √(200/{d:.1f})",
+            "formula": "k = min(2.0, 1 + sqrt(200/d))",
+            "substitution": f"k = 1 + sqrt(200/{d:.1f})",
             "result": f"{shear.get('k', 0):.3f}"
         },
         {
             "description": "Concrete shear resistance",
-            "formula": "V_Rd,c = [C_Rd,c · k · (100·ρ_l·f_ck)^(1/3)] · b_w · d",
-            "substitution": f"ρ_l = {shear.get('rho_l', 0):.5f}",
+            "formula": "V_Rd,c = [C_Rd,c * k * (100*rho_l*f_ck)^(1/3)] * b_w * d",
+            "substitution": f"rho_l = {shear.get('rho_l', 0):.5f}",
             "result": f"{shear.get('VRd_c', 0):.2f} kN"
         },
         {
             "description": "Max strut capacity",
-            "formula": "V_Rd,max = α_cw·b_w·z·ν₁·f_cd / (cotθ + tanθ)",
-            "substitution": f"θ = {shear.get('theta', 0):.1f}°, cotθ = {shear.get('cot_theta', 0):.2f}",
+            "formula": "V_Rd,max = alpha_cw*b_w*z*v1*f_cd / (cot_theta + tan_theta)",
+            "substitution": f"theta = {shear.get('theta', 0):.1f} deg, cot_theta = {shear.get('cot_theta', 0):.2f}",
             "result": f"{shear.get('VRd_max', 0):.2f} kN"
         },
         {
             "description": "Required shear reinforcement",
-            "formula": "A_sw/s = V_Ed / (z · f_ywd · cotθ)",
-            "substitution": f"A_sw/s = {req.VEd}×10³ / ({0.9*d:.1f} × {req.fywd/req.gamma_s:.1f} × {shear.get('cot_theta', 0):.2f})",
-            "result": f"{shear.get('Asw_s_final', 0):.3f} mm²/mm"
+            "formula": "A_sw/s = V_Ed / (z * f_ywd * cot_theta)",
+            "substitution": f"A_sw/s = {req.VEd}*10^3 / ({0.9*d:.1f} * {req.fywd/req.gamma_s:.1f} * {shear.get('cot_theta', 0):.2f})",
+            "result": f"{shear.get('Asw_s_final', 0):.3f} mm2/mm"
         },
     ]
 
     deflection_steps = [
         {
             "description": "Reference reinforcement ratio",
-            "formula": "ρ₀ = √f_ck × 10⁻³",
-            "substitution": f"ρ₀ = √{req.fck} × 10⁻³",
+            "formula": "rho_0 = sqrt(f_ck) * 10^-3",
+            "substitution": f"rho_0 = sqrt({req.fck}) * 10^-3",
             "result": f"{deflection.get('rho_0', 0):.5f}"
         },
         {
             "description": "Actual reinforcement ratio",
-            "formula": "ρ = A_s,req / (b · d)",
-            "substitution": f"ρ = {bending.get('As_req', 0)} / ({req.b} × {d:.1f})",
+            "formula": "rho = A_s,req / (b * d)",
+            "substitution": f"rho = {bending.get('As_req', 0)} / ({req.b} * {d:.1f})",
             "result": f"{deflection.get('rho', 0):.5f}"
         },
         {
             "description": "Basic span/depth ratio",
-            "formula": "L/d_basic = K · [11 + 1.5√f_ck·ρ₀/ρ + ...]",
+            "formula": "L/d_basic = K * [11 + 1.5*sqrt(f_ck)*rho_0/rho + ...]",
             "substitution": f"K_sys = {req.k_sys}",
             "result": f"{deflection.get('basic_l_d', 0):.2f}"
         },
         {
             "description": "Modification factor",
-            "formula": "Factor = (500/f_yk) · (A_s,prov/A_s,req) ≤ 1.5",
-            "substitution": f"Factor = (500/{req.fyk}) × ({As_prov:.1f}/{bending.get('As_req', 1):.1f})",
+            "formula": "Factor = (500/f_yk) * (A_s,prov/A_s,req) <= 1.5",
+            "substitution": f"Factor = (500/{req.fyk}) * ({As_prov:.1f}/{bending.get('As_req', 1):.1f})",
             "result": f"{deflection.get('modification_factor', 0):.3f}"
         },
         {
             "description": "Allowable span/depth",
-            "formula": "L/d_allow = L/d_basic × Factor",
-            "substitution": f"{deflection.get('basic_l_d', 0):.2f} × {deflection.get('modification_factor', 0):.3f}",
+            "formula": "L/d_allow = L/d_basic * Factor",
+            "substitution": f"{deflection.get('basic_l_d', 0):.2f} * {deflection.get('modification_factor', 0):.3f}",
             "result": f"{deflection.get('allowable_l_d', 0):.2f}"
         },
         {
@@ -210,23 +210,25 @@ def _build_formula_steps(req, d, bending, shear, deflection, cracking, As_prov):
     cracking_steps = [
         {
             "description": "Estimated steel stress",
-            "formula": "σ_s = 310 · (f_yk/500) · (A_s,req/A_s,prov)",
-            "substitution": f"σ_s = 310 × ({req.fyk}/500) × ({bending.get('As_req', 0):.1f}/{As_prov:.1f})",
+            "formula": "sigma_s = 310 * (f_yk/500) * (A_s,req/A_s,prov)",
+            "substitution": f"sigma_s = 310 * ({req.fyk}/500) * ({bending.get('As_req', 0):.1f}/{As_prov:.1f})",
             "result": f"{cracking.get('sigma_s', 0):.1f} MPa"
         },
         {
             "description": "Max allowable spacing",
-            "formula": "From Table 7.3N for w_k = {:.1f} mm".format(cracking.get('wk_limit', 0.3)),
-            "substitution": f"σ_s = {cracking.get('sigma_s', 0):.1f} MPa → interpolate",
+            "formula": f"From Table 7.3N for wk = {cracking.get('wk_limit', 0.3):.1f} mm",
+            "substitution": f"sigma_s = {cracking.get('sigma_s', 0):.1f} MPa -> interpolate",
             "result": f"{cracking.get('max_allowable_spacing', 0):.1f} mm"
         },
         {
             "description": "Actual bar spacing",
-            "formula": "s = (b − 2c − 2φ_link − n·φ_bar) / (n−1) + φ_bar",
-            "substitution": f"n = {req.n_bars}, φ = {req.bar_diameter} mm",
+            "formula": "s = (b - 2c - 2d_link - n*d_bar) / (n-1) + d_bar",
+            "substitution": f"n = {req.n_bars}, d = {req.bar_diameter} mm",
             "result": f"{cracking.get('actual_spacing', 0):.1f} mm"
         },
     ]
+
+
 
     return {
         "bending": bending_steps,
