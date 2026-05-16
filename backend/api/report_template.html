@@ -257,7 +257,9 @@
     <!-- HEADER -->
     <div class="report-header">
         <div style="float: right;">
-            <img src="{{ base_dir }}/logo.png" style="height: 60px;">
+            {% if logo_base64 %}
+            <img src="data:image/png;base64,{{ logo_base64 }}" style="height: 60px;">
+            {% endif %}
         </div>
         <h1>Structural Calculation Report</h1>
         <p class="subtitle">Reinforced Concrete Beam Design to BS EN 1992-1-1:2004+A1:2014 (Eurocode 2)</p>
