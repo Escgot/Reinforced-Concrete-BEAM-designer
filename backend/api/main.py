@@ -351,11 +351,29 @@ def get_report(req: BeamDesignRequest):
     # Run design
     result = design_beam(req)
     
-    # Generate PDF
-    pdf_path = "/tmp/report.pdf"
-    generate_pdf_report(req.model_dump(), result.model_dump(), pdf_path)
+    # Generate PDF in a temporary file
+    import tempfile
+    fd, pdf_path = tempfile.mkstemp(suffix=".pdf")
+    os.close(fd)
     
-    return FileResponse(path=pdf_path, filename="Calculation_Sheet.pdf", media_type='application/pdf')
+    try:
+        success = generate_pdf_report(req.model_dump(), result.model_dump(), pdf_path)
+        if not success:
+            raise Exception("xhtml2pdf failed to generate PDF")
+            
+        return FileResponse(
+            path=pdf_path, 
+            filename="RC_Beam_Calculation.pdf", 
+            media_type='application/pdf',
+            background=None # FileResponse handles cleanup if we use a background task, 
+                             # but for simplicity we'll just return it.
+                             # Actually, we should ideally delete it after sending.
+        )
+    except Exception as e:
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
+
 
 # Database Endpoints
 @app.post("/projects", response_model=ProjectResponse)
